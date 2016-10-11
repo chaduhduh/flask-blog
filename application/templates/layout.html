@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head_tag %}
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.3/foundation-flex.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/site.css">
+        <link href='https://fonts.googleapis.com/css?family=Raleway:500,700' rel='stylesheet' type='text/css'>
+        <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.3/foundation.min.js"></script>
+        <title>{% block title %}{% endblock %} - My Webpage</title>
+    {% endblock %}
+</head>
+<body>
+    <div class="header">
+        <a href="{{url_for('layout_home')}}" class="logo">
+            <div class="icon-row">
+                <i class="fa fa-home" aria-hidden="true"></i>
+            </div>
+            <div class="text">Awesome Blog</div>
+        </a>
+    </div>
+    <div class="user-banner">
+        {% if data.login_session.access_token %}
+            <div class="banner">
+                <div class="banner-row">
+                    <div class="user-info">
+                         <div class="user-image">
+                            <a href="/user/{{ data.login_session.user_id }}">
+                                <img src="{{ data.login_session.image }}" alt="">
+                            </a>
+                        </div>
+                        <div class="links">
+                            <a href="{{url_for('layout_home')}}">All Posts</a>
+                            <a href="{{url_for('layout_new_item')}}">Create Post</a>
+                            <a href="Javascript:void(0);" data-logout>Logout</a>
+                        </div>
+                        <div class="user-name">
+                            <span>Logged in as:</span> {{ data.login_session.email }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="banner">
+                <div class="banner-row">
+                    <div class="text">Please Sign in to Use the System</div>
+                    <div id="signInButton">
+                        <span class="g-signin"
+                            data-scope="openid email"
+                            data-clientid="1086125913606-te1dj092q4n1bo11odjenhrsp0docme6.apps.googleusercontent.com"
+                            data-redirecturi="postmessage"
+                            data-accesstype="offline"
+                            data-cookiepolicy="single_host_origin"
+                            data-callback="signInCallback"
+                            data-approvalprompt="force">
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div id="content">
+        {% block content %}{% endblock %}
+    </div>
+    <div class="footer" id="footer">
+        <div class="row">
+            {% block footer %}
+                {% if data.login_session.access_token %}
+                    <a class="delete" href="{{url_for('user_delete')}}">Delete User :(</a> 
+                {% endif %}
+                <span class="copy">&copy; 1900 Awesome Blog™</span>
+            {% endblock %}
+        </div>
+    </div>
+    <script>
+        function signInCallback(authResult) {
+            if (authResult['code']) {
+                // Hide the sign-in button now that the user is authorized
+
+                $('#signinButton').attr('style', 'display: none');
+                // do something with this token
+
+                $.ajax({
+                    type: 'POST',
+                    url: '{{url_for("connect_googleplus")}}?hash_key={{data.login_session.hash_key}}',
+                    processData: false,
+                    data: authResult['code'],
+                    contentType: 'application/octet-stream; charset=utf-8',
+                    success: function(result){
+                        window.location.href = "{{url_for('layout_home')}}";
+                    }
+                });
+            } 
+            else if (authResult['error']) {
+                console.log('There was an error: ' + authResult['error']);
+            } 
+            else {
+                $('#result').html('Something went wrong. Please Try again.');
+            }
+        }
+
+        $("[delete-link]").on("click", $(this), function(e){
+            e.preventDefault();
+
+            if(confirm("Are you sure you want to delete this? This cannot be undone.")){
+                $.get($(this).attr("href"), {}, function(){
+                    window.location.href = "/user/{{ data.login_session.user_id}}";
+                }).fail(function(){
+                    alert("unable to delete try again later");
+                });
+            }
+        });
+
+        $("[data-logout]").on("click", $(this), function(e){
+            e.preventDefault();
+            $.get("{{url_for('logout')}}", {}, function(){
+                window.location.href = "{{url_for('layout_home')}}";
+            })
+            .fail(function(){
+                alert("Unable to logout, please try again later.");
+            });
+        });
+    </script>
+</body>
+</html>

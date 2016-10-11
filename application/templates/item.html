@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block title %}Post{% endblock %}
+{% block head_tag %}
+    {{ super() }}
+    <script src="//apis.google.com/js/platform.js?onload=start"></script>
+{% endblock %}
+{% block content %}
+    <div id="result"></div>
+    <div class="row">
+      <div class="columns medium-8">
+		<div class="items">
+			{% if data.item.name %}
+				<div class="item">
+                    <h1> 
+                    	{{ data.item.name }}
+                    </h1>
+                    <p class="text">
+                      {{ data.item.text }}
+                    </p>
+                    <div class="item-cats">
+                      {% if data.item.cats %}
+				        	<div class="item-cats">
+					        	<b>categories:</b>
+					            {% for category in data.item.cats %}
+				                     <a href="/category/{{ category.id }}">
+		                                {{ category.name }}
+		                              </a>
+					            {% endfor %}
+				           	</div>
+				        {% endif %}
+                    </div>
+                    {% if data.item.user_id %}
+	                    {% if data.login_session.user_id == data.item.user_id %}
+		                    <div class="options">
+		                    	<b>Options:</b>
+		                    	<a href="/update-item/{{ data.item.id }}" class="edit">Edit</a>
+								<a href="/Item/delete/{{ data.item.id }}" class="delete" delete-link>delete</a>
+		                    </div>
+		                {% endif %}
+		            {% endif %}
+                </div>
+		    {% else %}
+		    	<div class="not-found">
+		    		Hmm, this item cannot be found.
+		    	</div>
+		    {% endif %}
+      	</div>
+      </div>
+      <div class="columns medium-4">
+        <div class="cats">
+            <h3>Categories</h3>
+            {% for cat in data.cats %}
+              <a href="/category/{{ cat.id }}">
+                {{ cat.name }}
+              </a>
+            {% endfor %}
+          </div>
+      </div>
+    </div>
+{% endblock %}

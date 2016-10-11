@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+{% block head_tag %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+    <div id="result"></div>
+    {% if data.login_session.access_token %}
+        <div class="row">
+            <div class="columns small-12 medium-centered medium-12 large-centered large-12">
+                {% if data.item %}
+                    <!-- update form -->
+
+                    <form action="#" method="post" data-add-form>
+                        <h1>Update Item</h1>
+                        <input type="hidden" name="hash_key" value="{{data.login_session.hash_key}}">
+                        <input type="hidden" name="id" value="{{data.item.id}}">
+                        <span class="input-label">Title:</span>
+                        <input type="text" name="title" value="{% if data.item.name %}{{ data.item.name }}{% endif %}" placeholder="title">
+                        {% if data.categories %}
+                            <span class="input-label">Category:</span>
+                            <select name="category" id="category">
+                                {% for category in data.categories %}
+                                    <option value="{{ category.id }}"
+                                        {% if data.item_cats.id == category.id %} selected="true"{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                        <span class="input-label">Content:</span>
+                        <textarea name="text" maxlength="499">{% if data.item.text %}{{ data.item.text }}{% endif %}</textarea>
+                        <input type="submit" value="submit">
+                    </form>
+                {% else %}
+                    <!-- new item form -->
+
+                    <form action="#" method="post" data-add-form>
+                        <h1>Create Item</h1>
+                        <input type="hidden" name="hash_key" value="{{data.login_session.hash_key}}">
+                        <span class="input-label">Title:</span>
+                        <input type="text" name="title" placeholder="title">
+                        {% if data.categories %}
+                            <span class="input-label">Categories:</span>
+                            <select name="category" id="category">
+                                {% for category in data.categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                        <span class="input-label">Content:</span>
+                        <textarea name="text" maxlength="499"></textarea>
+                        <input type="submit" value="submit">
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <h1>Please Login to Use the System</h1>
+    {% endif %}
+    <script>
+        $( document ).ready(function() {
+            var $page = $("#content");
+            var $form = $page.find("[data-add-form]");
+
+            $form.on("submit", $(this), function(e){
+            e.preventDefault();
+            var data = $(this).serialize();
+            var $self = $(this);
+            var id = $self.find('input[name="id"]').attr("value");
+
+            if($self.find('input[name="title"]').val().length <= 0){
+                alert("There is an error in your entry. Plese try again.");
+                return;
+            }
+
+            {% if data.item  %}
+                $.ajax({
+                    url: '{{url_for("update_item")}}',
+                    type: 'UPDATE',
+                    contentType: "application/x-www-form-urlencoded",
+                    data: data,
+                    success: function(result) {
+                        $form.html(
+                          '<div class="loading">' +
+                            'Success!! loading ..<i class="fa-spin fa fa-spinner loading"></i>'+
+                          '</div>'
+                        )
+                        setTimeout(function(){
+                            window.location.href = '/item/' + id;
+                        }, 1000);
+                    }
+                });
+                {% else %}
+                    $.ajax({
+                        url: '{{url_for("create_item")}}',
+                        type: 'POST',
+                        contentType: "application/x-www-form-urlencoded",
+                        data: data,
+                        success: function(result) {
+                            $form.html(
+                              '<div class="loading">' +
+                                'Success!! loading ..<br /><i class="fa-spin fa fa-spinner loading"></i>'+
+                              '</div>'
+                            )
+                            setTimeout(function(){
+                                window.location.href = "{{url_for('layout_home')}}";
+                            }, 1000);
+                        }
+                    });
+                {% endif %}
+            });
+        });
+    </script>
+{% endblock %}
