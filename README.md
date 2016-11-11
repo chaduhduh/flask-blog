@@ -3,7 +3,7 @@
 Utilizes the Flask framework to provide the basis for any list type web application. The demonstration 
 provided is setup as blog in which users can add posts and tag them with the appropriate category. This could really 
 be used for any list type of application, such as: tutorials, products, reviews etc.<br /><br />
-![Alt text](application/static/images/preview.jpg?raw=true "Preview")<br />
+Live Demo: http://flask-blog.chaddmyers.com/<br />
 <br />
 
 ##To Run:</b><br />
