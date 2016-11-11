@@ -6,6 +6,7 @@ from flask import Flask, \
     make_response, flash
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 from database_setup import Base, \
     Items as Item, \
     Users as User, \
@@ -17,6 +18,8 @@ import json
 import requests
 import random
 import string
+from flask_blog.database  import db_session, engine
+from flask_blog.database import init_db, seed_categories
 
 
 # setup
@@ -24,12 +27,10 @@ import string
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.secret_key = '\x11\xa4W[\xfc\xba\x1df-\xe5OrW\xc1\xc3\xd8>r\xc1\xbciV\xfbp'
-engine = create_engine('sqlite:///catalog.db')
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-db = DBSession()
+init_db()
+db = db_session
 CLIENT_ID = json.loads(
-    open('client_secret.json', 'r').read())['web']['client_id']
+    open('/var/www/flask_blog/flask_blog/client_secret.json', 'r').read())['web']['client_id']
 session_keys = ["user_id", "access_token", "name",
                 "gplus_id", "username", "email", "picture"]
 
@@ -67,7 +68,7 @@ def connect_googleplus():
     # authorization code to credentials object
 
     try:
-        oauth_flow = flow_from_clientsecrets('client_secret.json', scope='')
+        oauth_flow = flow_from_clientsecrets('/var/www/flask_blog/flask_blog/client_secret.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(request.data)
     except FlowExchangeError:
@@ -144,6 +145,12 @@ def gdisconnect():
                                  User name not found', 400))
         response.headers['Content-Type'] = 'application/json'
         return response
+
+@app.route('/seed')
+def seed():
+    update_categories()
+    return redirect(url_for('layout_home'))
+
 
 
 # API Routes
@@ -688,6 +695,10 @@ def layout_update_item(ids):
         "item_cats": item_cats
     })
 
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()
+
 
 # functions
 
@@ -804,6 +815,30 @@ def delete_user(args):
         return user
     else:
         return False
+
+def update_categories():
+    
+    if not db.query(Categories).filter_by(name="Sports").count():
+        sports = Categories(name="Sports")
+        db.add(sports)  
+    
+    if not db.query(Categories).filter_by(name="Music").count():
+        music = Categories(name="Music")
+        db.add(music)
+    
+    if not db.query(Categories).filter_by(name="Entertainment").count():
+        entertainment = Categories(name="Entertainment")
+        db.add(entertainment)
+
+    if not db.query(Categories).filter_by(name="Dining").count():
+        dining = Categories(name="Dining")
+        db.add(dining)
+    
+    if not db.query(Categories).filter_by(name="Funny").count():
+        funny = Categories(name="Funny")
+        db.add(funny)
+
+    db.commit()
 
 
 # flask start
